@@ -290,11 +290,19 @@ function add(k,n){n=Math.min(n,P.pts);P.st[k]+=n;P.pts-=n;rp();ui()}
 function buy(t,n){if(t=='p'){P.z-=40*n;P.pot+=n}else if(t=='w'){P.z-=wc(P.w);P.w++}else{P.z-=ac(P.a);P.a++}rp();ui()}
 let PEND=null;
 function bkmsg(t){const e=$('#bkmsg');if(e)e.textContent=t}
-async function exp_(){try{const dl=window.claude&&claude.use?await claude.use('downloads'):null;
- if(!dl){bkmsg('此環境不支援下載檔案');return}
- save();const d=new Date(),ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
- await dl.save({filename:'修仙放置傳_'+P.n+'_'+ds+'.json',data:JSON.stringify({game:'xiuxian-idle',version:1,exportedAt:d.toISOString(),data:P},null,2)});
- bkmsg('✅ 已匯出進度檔')}catch(e){bkmsg(e&&e.code=='declined'?'已取消匯出':'匯出失敗：'+((e&&e.message)||e))}}
+async function exp_(){
+ let dl=null,why='';
+ try{save();const d=new Date(),ds=d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  const fn='修仙放置傳_'+P.n+'_'+ds+'.json',data=JSON.stringify({game:'xiuxian-idle',version:1,exportedAt:d.toISOString(),data:P},null,2);
+  try{if(!(window.claude&&typeof claude.use=='function'))why='目前不是在 claude.ai 作品檢視器內開啟';
+   else{dl=await claude.use('downloads');if(!dl)why='此檢視環境未提供下載功能'}}catch(e){why='下載功能載入失敗'}
+  if(dl){try{await dl.save({filename:fn,data});bkmsg('✅ 已匯出進度檔');return}
+   catch(e){const c=e&&e.code;if(c=='declined'){bkmsg('已取消匯出');return}if(c=='rate_limited'){bkmsg('請稍候幾秒再試');return}why='下載功能回應：'+(c||'錯誤')}}
+  // 備援：瀏覽器原生下載（獨立網址開啟時可用）
+  const u=URL.createObjectURL(new Blob([data],{type:'application/json'})),a=document.createElement('a');
+  a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);
+  bkmsg('已改用瀏覽器直接下載（'+why+'）。若沒有出現檔案，請從 claude.ai 的作品頁面開啟遊戲後再按一次。')
+ }catch(e){bkmsg('匯出失敗：'+((e&&e.message)||e))}}
 function imp_(f){if(!f)return;const r=new FileReader();
  r.onload=()=>{try{const o=JSON.parse(r.result),d=o&&o.game=='xiuxian-idle'&&o.data?o.data:o;
   if(!(d&&d.n&&CLS[d.c]&&d.st&&typeof d.lv=='number'))throw 0;
