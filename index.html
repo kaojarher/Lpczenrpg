@@ -64,17 +64,29 @@ let P=null,tab='map',M=null,dead=0,tm=null;
 function newP(n,c){const st={str:5,agi:5,vit:5,int:5,dex:5,luk:5};st[CLS[c].m]+=5;
  return{n,c,mcs:{},rel:{},col:{},inv:[],eq:{},cards:{},asq:1,lv:1,xp:0,st,pts:10,z:100,pot:5,w:0,a:0,map:0,k:0,hp:0,mp:0,cd:0,pp:50,ab:1,as:1,t:Date.now()}}
 const pw=i=>Math.round(i.p*(1+.12*(i.r||0))),eqv=s=>{const i=P.eq&&P.eq[s];return i?pw(i):0};
-const D=()=>{const s=P.st,c=CLS[P.c],k=cs(),cb=(1+Object.keys(P.cards||{}).length*.01+Object.keys(P.col||{}).length*.005+acn()*.005)*(1+(P.rb||0)*.15)*(P.j2?1.25:1);return{
+const D=()=>{const A=aff(),s=P.st,c=CLS[P.c],k=cs(),cb=(1+Object.keys(P.cards||{}).length*.01+Object.keys(P.col||{}).length*.005+acn()*.005)*(1+(P.rb||0)*.15)*(P.j2?1.25:1);return{
  hp:Math.round(((40+s.vit*7+P.lv*14+P.a*35)*c.hp+eqv('h')*5+eqv('a')*3)*cb*(1+k.h)),mp:20+s.int*4+P.lv*4,
  atk:(5+P.lv*1.5+s[c.m]*2.2+(c.m!='str'?s.str*.3:0)+P.w*9+eqv('w')+eqv('r')*.5)*cb*(1+k.w)*(Date.now()<P.bf?1.2:1),df:s.vit*.8+P.a*5+eqv('a')*.5+eqv('r')*.25+k.a,
- cr:Math.min(.6,s.luk*.006+.03),dg:Math.min(.5,s.agi*.004)}};
+ cr:Math.min(.75,s.luk*.006+.03+A.crit/100),dg:Math.min(.6,s.agi*.004+A.eva/100),A,ea:(A.fire+A.ice+A.thunder+A.poison)/100,ls:A.ls}};
 const SL={w:'法劍',h:'道冠',a:'法袍',r:'玉戒'},QN=['凡品','靈品','仙品','神品'],QC=['','#2563eb','#9333ea','#d97706'];
-const iname=t=>(t.r?'+'+t.r+' ':'')+QN[t.q]+SL[t.s]+' Lv'+t.L+'（+'+t.p+'）';
+const AF={ls:{n:'吸血',e:'🩸',f:q=>1.2+q*.8},ms:{n:'吸靈',e:'🔵',f:(q,L)=>1+L*.04+q},fire:{n:'火焰',e:'🔥',f:q=>6+q*4},ice:{n:'寒冰',e:'❄️',f:q=>6+q*4},
+ thunder:{n:'雷霆',e:'⚡',f:q=>6+q*4},poison:{n:'劇毒',e:'☠️',f:q=>6+q*4},crit:{n:'暴擊',e:'🎯',f:q=>2+q*1.5},eva:{n:'閃避',e:'💨',f:q=>1.5+q},
+ regen:{n:'回氣',e:'💚',f:q=>.2+q*.15},pierce:{n:'破甲',e:'🗡️',f:q=>5+q*3}},EL=['fire','ice','thunder','poison'],
+ AP={w:['ls','ms','fire','ice','thunder','poison','crit','pierce'],h:['ms','eva','regen','crit','ls'],a:['ls','eva','regen','ms'],r:Object.keys(AF)},
+ EC={fire:'#ea580c',ice:'#0ea5e9',thunder:'#ca8a04',poison:'#7c3aed'},
+ ELM={rabbit:{w:'thunder'},bandit:{w:'poison'},goblin:{w:'fire'},pig:{w:'fire'},fox:{w:'ice',r:'fire'},rat:{w:'fire',r:'poison'},zombie:{w:'fire',r:'poison'},lizard:{w:'ice',r:'poison'},
+  bat:{w:'thunder'},skeleton:{w:'thunder',r:'poison'},wolf:{w:'fire',r:'ice'},boar:{w:'thunder'},troll:{w:'fire',r:'ice'},orc:{w:'ice'},minotaur:{w:'thunder',r:'fire'},
+  vampire:{w:'fire',r:'ice'},demon:{w:'ice',r:'fire'},ghost:{w:'thunder'}};
+const elOf=m=>/冰|霜|寒/.test(m.n)?{w:'fire',r:'ice'}:(ELM[m.e]||{}),wk=m=>{const e=elOf(m);return(e.w?' 弱'+AF[e.w].e:'')+(e.r?' 抗'+AF[e.r].e:'')};
+function rollAff(it){const n=it.q<=0?0:Math.min(3,it.q),pool=[...AP[it.s]],x=[];for(let i=0;i<n&&pool.length;i++){const k=pool.splice(Math.floor(Math.random()*pool.length),1)[0],v=AF[k].f(it.q,it.L)*(.8+Math.random()*.4);x.push([k,k=='ms'?Math.max(1,Math.round(v)):Math.round(v*10)/10])}it.x=x;return it}
+const affT=it=>(it.x||[]).map(([k,v])=>AF[k].e+AF[k].n+(k=='ms'?'+'+v:' '+v+'%')).join('・');
+const aff=()=>{const T={ls:0,ms:0,fire:0,ice:0,thunder:0,poison:0,crit:0,eva:0,regen:0,pierce:0};for(const s in P.eq){const it=P.eq[s];if(it&&it.x)for(const[k,v]of it.x)T[k]+=v}return T};
+const iname=t=>(t.r?'+'+t.r+' ':'')+QN[t.q]+SL[t.s]+' Lv'+t.L+'（+'+t.p+'）'+(t.x&&t.x.length?' 〔'+affT(t)+'〕':'');
 function drop(m){P.inv=P.inv||[];P.cards=P.cards||{};P.col=P.col||{};P.rel=P.rel||{};
  if(m.boss&&Math.random()<.3){const rn=RL[m.mi!=null?m.mi:P.map];if(!P.rel[rn]){P.rel[rn]=1;log('🏺 獲得法寶【'+rn+'】！修為與 靈石 +3%','b')}}
  const cn=m.bn||m.n;if(!P.cards[cn]&&Math.random()<(m.boss?.2:m.rare?.1:.02)){P.cards[cn]=1;log('🎴 獲得【'+cn+'】妖丹！全能力 +1%','b')}
  if(Math.random()<(m.boss?1:m.rare?.6:.12)){const r=Math.random(),q=m.boss?(r<.5?2:3):m.rare?(r<.1?3:r<.45?2:1):(r<.02?3:r<.1?2:r<.35?1:0),s='whar'[Math.floor(Math.random()*4)];
-  const it={s,q,L:m.L,p:Math.round((2+m.L*.8)*(1+q*.6))};P.col[s+q]=1;
+  const it=rollAff({s,q,L:m.L,p:Math.round((2+m.L*.8)*(1+q*.6))});P.col[s+q]=1;
   if(q<P.asq||P.inv.length>=40)P.z+=it.p*6;else{P.inv.push(it);if(q>=2)log('✨ 獲得 '+iname(it),'b')}}}
 function equip(i){const it=P.inv.splice(i,1)[0];if(P.eq[it.s])P.inv.push(P.eq[it.s]);P.eq[it.s]=it;rp();ui()}
 function sell(i){P.z+=P.inv[i].p*6;P.inv.splice(i,1);rp();ui()}
@@ -113,8 +125,11 @@ function tick(){const d=D(),c=CLS[P.c];
  let mult=1,nm='';P.cd--;
  const j3=P.j2&&P.s2!==0?J3[P.c]:null,S=j3&&P.mp>=j3[2]?j3:P.lv>=c.s2[3]&&P.s2!==0?c.s2:c.sk;if(P.as&&P.cd<=0&&P.mp>=S[2]){P.mp-=S[2];P.cd=S===j3?4:3;mult=S[1];nm=S[0];
   if((S===c.sk?c.sk[3]:S[4])&&P.hp<d.hp*.7){P.hp=Math.min(d.hp,P.hp+d.hp*.25);fl('治癒','#16a34a','left')}}
- let dm=Math.max(1,Math.round((d.atk*mult*R(.9,1.1))-M.df)),cr=Math.random()<d.cr;if(cr)dm=Math.round(dm*1.6);
+ let dm=Math.max(1,Math.round((d.atk*mult*R(.9,1.1))-M.df*(1-Math.min(.5,d.A.pierce/100)))),cr=Math.random()<d.cr;if(cr)dm=Math.round(dm*1.6);
  if(wt()>cap())dm=Math.round(dm*.8);M.hp-=dm;fl((nm?nm+' ':'')+dm+(cr?'!':''),cr?'#dc2626':'#b45309','right');
+ {let tot=dm;const el=elOf(M);for(const k of EL){const v=d.A[k];if(v>0){const w=el.w==k?1.6:el.r==k?.4:1,x=Math.max(1,Math.round(d.atk*v/100*w*R(.9,1.1)));M.hp-=x;tot+=x;fl(AF[k].e+x+(w>1?'↑':w<1?'↓':''),EC[k],'right')}}
+  if(d.ls>0){const hv=Math.round(tot*d.ls/100);if(hv>0){P.hp=Math.min(d.hp,P.hp+hv);fl('🩸+'+hv,'#be123c','left')}}
+  if(d.A.ms>0)P.mp=Math.min(d.mp,P.mp+d.A.ms);if(d.A.regen>0)P.hp=Math.min(d.hp,P.hp+d.hp*d.A.regen/100)}
  for(const k in MC){const lv=P.mcs[k]||0;if(!lv)continue;const q=MC[k];
   if(q.h){if(P.hp<d.hp*.85){const hv=Math.round(d.hp*q.h*(1+lv*.25));P.hp=Math.min(d.hp,P.hp+hv);fl('+'+hv,'#16a34a','left')}}
   else{const x=Math.max(1,Math.round(d.atk*q.d*(1+lv*.25)-M.df*.5));M.hp-=x;fl(x,'#0d9488','right')}}
@@ -135,7 +150,7 @@ const dstr=(t=Date.now())=>{const d=new Date(t);return d.getFullYear()+'-'+(d.ge
 const mlv=n=>{for(const m of MAPS){for(const x of m.m)if(x[0]==n)return x[2];if('【妖王】'+m.b[0]==n)return m.m[m.m.length-1][2]+3}return 1};
 const cs=()=>{const o={w:0,h:0,a:0,r:0};for(const s in P.sock||{}){const n=P.sock[s];if(!n||!P.cards||!P.cards[n])continue;const L=mlv(n);o[s]=s=='a'?L*.5:s=='r'?(4+L*.1)/100:(6+L*.15)/100}return o};
 const acn=()=>Object.keys(P.ac||{}).length,xm=()=>1+Object.keys(P.rel||{}).length*.03+(Date.now()<P.xb?.5:0)+(P.rb||0)*.1+cs().r+acn()*.002;
-function giveItem(q,L){L=L||P.lv;const s='whar'[Math.floor(Math.random()*4)],it={s,q,L,p:Math.round((2+L*.8)*(1+q*.6))};P.col[s+q]=1;if(P.inv.length<40)P.inv.push(it);else P.z+=it.p*6;return it}
+function giveItem(q,L){L=L||P.lv;const s='whar'[Math.floor(Math.random()*4)],it=rollAff({s,q,L,p:Math.round((2+L*.8)*(1+q*.6))});P.col[s+q]=1;if(P.inv.length<40)P.inv.push(it);else P.z+=it.p*6;return it}
 /* 每日 */
 function ev(k,n=1){const q=P.dq&&P.dq.q;if(q)q.forEach(x=>{if(x.k==k&&x.c<x.n)x.c=Math.min(x.n,x.c+n)})}
 function newDaily(){const L=P.lv,q=[{k:'kill',n:80,t:'擊敗 80 隻妖獸'},{k:'boss',n:1,t:'擊敗 1 隻 妖王'},{k:'rare',n:1,t:'擊敗 1 隻異種妖獸'},L>=30?{k:'tower',n:3,t:'通過鎖妖塔 3 層'}:{k:'refine',n:2,t:'精煉裝備 2 次'}];
@@ -168,8 +183,8 @@ function rndEvent(){const r=Math.random(),d=D();
  else{P.hp=d.hp;P.mp=d.mp;P.pot+=5;log('🧙 迷途商人贈送補給：氣血／靈力 全滿、丹藥 +5','b')}}
 /* 離線 / 補算 */
 function offline(sec){if(P.town||sec<120)return;sec=Math.min(sec,(8+2*(P.oc||0))*3600);
- const d=D(),mp=MAPS[P.map],ms=mp.m,L=ms.reduce((a,x)=>a+x[2],0)/ms.length,hp=30+L*L*1.5+L*20,dmg=Math.max(1,d.atk*1.15-L*.8),tk=Math.max(1,Math.ceil(hp/dmg))+1,
-  taken=Math.max(1,(4+L*2.2)*.9-d.df*.5)*(1-d.dg)*tk,pk=Math.max(0,taken-d.hp*.006*tk)/(d.hp*.4);
+ const d=D(),mp=MAPS[P.map],ms=mp.m,L=ms.reduce((a,x)=>a+x[2],0)/ms.length,hp=30+L*L*1.5+L*20,dmg=Math.max(1,d.atk*1.15*(1+d.ea)-L*.8*(1-Math.min(.5,d.A.pierce/100))),tk=Math.max(1,Math.ceil(hp/dmg))+1,
+  taken=Math.max(1,(4+L*2.2)*.9-d.df*.5)*(1-d.dg)*tk,pk=Math.max(0,taken-d.hp*.006*tk-dmg*(d.ls/100)*tk-d.hp*d.A.regen/100*tk)/(d.hp*.4);
  let eff=.5+.05*(P.oe||0);const weak=pk>2;if(weak)eff*=.15;
  const n=Math.min(20000,Math.floor(sec*eff/(tk*.7)));if(n<1)return;
  const rm=xm(),xp=Math.round(n*(10+L*L*1.4)*rm),pc=Math.round(n*pk*40),zz=Math.max(0,Math.round(n*(3+L*L*.12+L)*rm)-pc),lv0=P.lv;
@@ -224,7 +239,7 @@ function ui(){const d=D();
  bar('#bh',P.hp,d.hp);bar('#bm',P.mp,d.mp);bar('#bx',P.xp,need(P.lv));
  $('#ht').textContent=`氣血 ${Math.ceil(P.hp)}/${d.hp}　靈力 ${Math.floor(P.mp)}/${d.mp}　修為 ${(P.xp/need(P.lv)*100).toFixed(1)}%`;
  $('#me').innerHTML=`<b>${dead?sp('ghost',1):sp(CLS[P.c].e,1,P.j2?GL:'')}${Object.keys(MC).filter(k=>P.mcs[k]).map(k=>sp(MC[k].i,.6)).join('')}</b><small>${P.n}</small>`;
- $('#en').innerHTML=P.town?`<b>${sp('acolyte',1)}</b><small>丹藥師・調息中</small>`:M?`<b>${sp(M.e,M.boss?1.3:1,M.f)}</b><small>${M.n} Lv.${M.L}</small><div class="bar"><i style="width:${M.hp/M.mx*100}%;background:var(--hp)"></i></div>`:`<b>💤</b><small>${dead?'復活中…':'尋找妖獸'}</small>`;
+ $('#en').innerHTML=P.town?`<b>${sp('acolyte',1)}</b><small>丹藥師・調息中</small>`:M?`<b>${sp(M.e,M.boss?1.3:1,M.f)}</b><small>${M.n} Lv.${M.L}${wk(M)?'<br>'+wk(M).trim():''}</small><div class="bar"><i style="width:${M.hp/M.mx*100}%;background:var(--hp)"></i></div>`:`<b>💤</b><small>${dead?'復活中…':'尋找妖獸'}</small>`;
  $('#stage').className=(P.town||dead)?'town':'';{const w=Math.round(wt()/cap()*100);$('#sb').textContent=(P.town?'🏯 調息中':dead?'✝️ 復活中':M?'⚔️ 戰鬥中':'🔎 搜尋中')+'　負重 '+w+'%'+(w>100?'（超重，攻擊 -20%）':'')+'　💊'+P.pot+(Date.now()<P.bf?'　🙏加持':'')+(Date.now()<P.xb?'　📜悟道符':'')+'　護法 '+Object.keys(MC).filter(k=>P.mcs[k]).length+(onl?'　🌐線上 '+onl:'')}$('#mapn').textContent=P.town?'🏯 青雲城・安全區（氣血／靈力 快速恢復，自動補丹藥）':P.tm?towerTxt():'📍 '+MAPS[P.map].n+'　擊殺 '+P.k+'　下一隻 妖王：'+(20-P.k%20)}
 function setTab(t){tab=t;rp()}
 function rp(){const p=$('#panel');
@@ -235,8 +250,8 @@ function rp(){const p=$('#panel');
   Object.keys(SN).map(k=>`<div class="it"><span>${SN[k]}${CLS[P.c].m==k?' ⭐':''}</span><span><b>${P.st[k]}</b> <button ${P.pts?'':'disabled'} onclick="add('${k}',1)">+1</button> <button class="g" ${P.pts>=5?'':'disabled'} onclick="add('${k}',5)">+5</button></span></div>`).join('')}
  if(tab=='bag'){const E=P.eq,o=['不自動賣出','自動賣出凡品','自動賣出凡品＋靈品'];
  h+=`<div class="row sp" style="margin-bottom:6px"><span class="mut">背包 ${P.inv.length}/40</span><select onchange="P.asq=+this.value">${o.map((t,i)=>`<option value="${i}" ${P.asq==i?'selected':''}>${t}</option>`).join('')}</select><button class="g" onclick="sellAll()">賣出凡品</button></div>`+
- ['w','h','a','r'].map(eqRow).join('')+'<div class="mut" style="margin:8px 0 2px">背包物品</div>'+
- (P.inv.length?P.inv.map((it,i)=>`<div class="it"><span style="color:${QC[it.q]||'inherit'}">${iname(it)}</span><span><button onclick="equip(${i})">穿戴</button> <button class="g" onclick="sell(${i})">賣 ${it.p*6}</button></span></div>`).join(''):'<div class="mut">尚無裝備，擊敗妖獸會掉落</div>')}
+ '<div class="mut" style="margin:4px 0">靈品以上裝備帶詞綴：🩸吸血 🔵吸靈 🔥❄️⚡☠️屬性傷害（打中弱點 ×1.6、遇抗性 ×0.4）🎯暴擊 💨閃避 💚回氣 🗡️破甲。妖獸名稱旁標示弱點（弱）與抗性（抗）。</div>'+['w','h','a','r'].map(eqRow).join('')+'<div class="mut" style="margin:8px 0 2px">背包物品</div>'+
+ (P.inv.length?P.inv.map((it,i)=>`<div class="it" style="flex-wrap:wrap"><span style="color:${QC[it.q]||'inherit'}">${iname(it)}</span><span><button onclick="equip(${i})">穿戴</button> <button class="g" onclick="sell(${i})">賣 ${it.p*6}</button></span></div>`).join(''):'<div class="mut">尚無裝備，擊敗妖獸會掉落</div>')}
  if(tab=='card'){const all=MAPS.flatMap(m=>m.m.map(x=>[x[0],x[1],x[3]]).concat([['【妖王】'+m.b[0],m.b[1],m.b[2]]])),n=Object.keys(P.cards).length;
  h+=`<div class="mut">已收集 ${n}/${all.length}　全能力 +${n}%（一般怪 2%、異種妖獸 10%、妖王 20% 掉丹；可在背包為裝備嵌丹）</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;margin-top:6px">`+all.map(([k,s,f])=>`<div style="text-align:center;font-size:12px;opacity:${P.cards[k]?1:.4}">${sp(s,.9,(P.cards[k]?'':'grayscale(1) ')+(f||''))}<br>${k.replace('【妖王】','👑')}</div>`).join('')+'</div>'}
  if(tab=='card'){const rn=Object.keys(P.rel).length;h+=`<div class="mut" style="margin:10px 0 4px">🏺 法寶 ${rn}/${RL.length}（修為與 靈石 +${rn*3}%・妖王 30% 掉落）</div><div class="row">`+RL.map(n=>`<span style="padding:3px 8px;border:1px solid var(--bd);border-radius:8px;opacity:${P.rel[n]?1:.35}">${n}</span>`).join('')+`</div><div class="mut" style="margin:10px 0 4px">🧰 裝備收集冊 ${Object.keys(P.col).length}/16（每項 攻擊／氣血 +0.5%）</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:12px;text-align:center">`+['w','h','a','r'].flatMap(s=>[0,1,2,3].map(q=>`<div style="border:1px solid var(--bd);border-radius:6px;padding:3px;opacity:${P.col[s+q]?1:.35};color:${QC[q]||'inherit'}">${QN[q]}${SL[s]}</div>`)).join('')+'</div>'}
@@ -272,7 +287,7 @@ const NPC=[{n:'丹藥師',i:'acolyte',l:['歡迎來到青雲城，道友。','�
 function talk(i){NL[i]=(NL[i]+1)%3;rp()}
 function bless(){if(P.z<200)return;P.z-=200;P.bf=Date.now()+3e5;log('🙏 獲得加持，攻擊 +20%（5 分鐘）');rp();ui()}
 function quest(){const L=MAPS[P.map].m[1][2],n=25;P.q={n,c:0,d:0,g:Math.round(n*(3+L*L*.12+L)*2),x:Math.round(n*(10+L*L*1.4)*.6)};log('📜 接受任務：在 '+MAPS[P.map].n+' 討伐 '+n+' 隻');rp();ui()}
-function bm(k){if(k==0){const c=1000+P.lv*400;if(P.z<c||P.inv.length>=40){log('背包已滿或 靈石 不足');return}P.z-=c;const r=Math.random(),q=r<.1?3:r<.4?2:1,s='whar'[Math.floor(Math.random()*4)],it={s,q,L:P.lv,p:Math.round((2+P.lv*.8)*(1+q*.6))};P.inv.push(it);P.col[s+q]=1;log('📦 靈寶匣開出 '+iname(it))}
+function bm(k){if(k==0){const c=1000+P.lv*400;if(P.z<c||P.inv.length>=40){log('背包已滿或 靈石 不足');return}P.z-=c;const r=Math.random(),q=r<.1?3:r<.4?2:1,s='whar'[Math.floor(Math.random()*4)],it=rollAff({s,q,L:P.lv,p:Math.round((2+P.lv*.8)*(1+q*.6))});P.inv.push(it);P.col[s+q]=1;log('📦 靈寶匣開出 '+iname(it))}
  else if(k==1){const c=3000+P.lv*200;if(P.z<c)return;P.z-=c;P.xb=Math.max(Date.now(),P.xb||0)+6e5;log('📜 修為 +50%（10 分鐘）')}
  else{const c=4000*((P.wb||0)+1)**2;if(P.z<c||(P.wb||0)>=5)return;P.z-=c;P.wb=(P.wb||0)+1;log('🎒 負重上限 +50')}rp();ui()}
 let RM=null,CR=null,onl=0;
@@ -314,7 +329,7 @@ function create(){$('#app').innerHTML=`<div class="card"><h1>⚔️ 修仙放置
  <div class="card"><input id="nm" placeholder="角色名稱" maxlength="10" value="修士" style="width:100%;margin-bottom:10px"><div class="cls">${Object.keys(CLS).map(c=>`<button class="g" onclick="start('${c}')"><b>${sp(CLS[c].e,1)}</b>${c}</button>`).join('')}</div>
  <p class="mut">點選職業即開始。</p></div><div class="card ft">本遊戲為原創修仙題材放置遊戲，僅供非商業用途。角色與妖獸圖由 Liberated Pixel Cup（LPC）開源圖層合成，作者與授權標註見頁面下方。</div>`}
 function start(c){P=newP(($('#nm').value||'修士').trim().slice(0,10),c);const d=D();P.hp=d.hp;P.mp=d.mp;save();boot()}
-function boot(){P.mcs=P.mcs||{};P.rel=P.rel||{};P.col=P.col||{};P.inv=P.inv||[];P.eq=P.eq||{};P.cards=P.cards||{};if(P.asq==null)P.asq=1;P.ac=P.ac||{};P.sock=P.sock||{};P.rb=P.rb||0;P.oe=P.oe||0;P.oc=P.oc||0;P.tf=P.tf||1;P.tc=P.tc||0;P.ml=Math.max(P.ml||0,P.lv);P.bk=P.bk||0;P.rk=P.rk||0;$('#app').innerHTML=`<div class="card"><div id="hd"></div><div class="bar"><i id="bh" style="background:var(--hp)"></i></div><div class="bar"><i id="bm" style="background:var(--mp)"></i></div><div class="bar"><i id="bx" style="background:var(--xp)"></i></div><div class="mut" id="ht"></div></div>
+function boot(){P.mcs=P.mcs||{};P.rel=P.rel||{};P.col=P.col||{};P.inv=P.inv||[];P.eq=P.eq||{};P.cards=P.cards||{};if(P.asq==null)P.asq=1;P.ac=P.ac||{};P.sock=P.sock||{};[...P.inv,...Object.values(P.eq)].forEach(it=>{if(it&&!it.x)rollAff(it)});P.rb=P.rb||0;P.oe=P.oe||0;P.oc=P.oc||0;P.tf=P.tf||1;P.tc=P.tc||0;P.ml=Math.max(P.ml||0,P.lv);P.bk=P.bk||0;P.rk=P.rk||0;$('#app').innerHTML=`<div class="card"><div id="hd"></div><div class="bar"><i id="bh" style="background:var(--hp)"></i></div><div class="bar"><i id="bm" style="background:var(--mp)"></i></div><div class="bar"><i id="bx" style="background:var(--xp)"></i></div><div class="mut" id="ht"></div></div>
  <div class="grid"><div><div class="card" style="padding:0"><div class="mut" id="mapn" style="padding:8px 10px"></div><div id="stage"><div class="sp1" id="me"></div><div class="sp1" id="en"></div></div><div class="mut" id="sb" style="padding:6px 10px"></div></div><div class="card"><div class="tabs" id="lt" style="margin-bottom:4px"><button data-k="b" onclick="setLt('b')">戰鬥</button><button data-k="s" onclick="setLt('s')">系統</button><button data-k="c" onclick="setLt('c')">聊天</button></div><div id="log"></div><div class="row" style="margin-top:6px;flex-wrap:nowrap"><select id="cc"><option value="w">世界</option><option value="c">宗門</option></select><input id="ct" maxlength="60" placeholder="輸入訊息…" style="flex:1;min-width:0" onkeydown="if(event.key==='Enter')say()"><button onclick="say()">送出</button></div></div></div><div class="card" id="panel"></div></div><div class="card ft">本遊戲為原創修仙題材放置遊戲，僅供非商業用途。角色與妖獸圖由 Liberated Pixel Cup（LPC）開源圖層合成，作者與授權標註見頁面下方。</div>`;
  const now=Date.now(),sec=(now-P.t)/1000;LT=now;DLT=now;
  dayCheck();
